@@ -1,0 +1,3 @@
+module S3snapshot
+  # Your code goes here...
+end
