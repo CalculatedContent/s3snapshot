@@ -1,3 +1,4 @@
 module S3snapshot
-  # Your code goes here...
+require 's3snapshot/cli'
+S3snapshot::CLI.start
 end
