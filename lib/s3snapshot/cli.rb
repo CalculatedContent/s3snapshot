@@ -25,13 +25,16 @@ module S3snapshot
     end
     
     
+    desc "prefixes", "list all prefixes in an s3 bucket"
+
+
     method_option :awsid, :aliases => "-i", :desc => "The aws id", :type => :string, :required => true
     method_option :awskey,:aliases => "-k", :desc => "The aws secret key", :type => :string, :required => true
     method_option :bucket, :aliases => "-b", :desc => "The aws bucket to use", :type => :string, :required => true
  
-    def list_prefix
+    def prefixes()
       manager = BackupManager.new(options[:awsid], options[:awskey], options[:bucket])
-
+      manager.prefixes
     end
   end
 end
