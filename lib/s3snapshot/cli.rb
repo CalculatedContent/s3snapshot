@@ -35,7 +35,14 @@ module S3snapshot
     
     def prefixes
       manager = BackupManager.new(options[:awsid], options[:awskey], options[:bucket])
-      manager.print_prefixes
+      
+      puts "Found the following prefixes\n\n"
+      
+      manager.prefixes.each do |prefix|
+        puts prefix[0..-2]
+      end
+      
+      puts "\n"
     end
     
     
@@ -50,7 +57,19 @@ module S3snapshot
     
     def snapshots
       manager = BackupManager.new(options[:awsid], options[:awskey], options[:bucket])
-      manager.print_snapshots(options[:prefix])
+      
+      snap_map = manager.snapshots(options[:prefix])
+      
+      puts "Found the following timestamps from prefix #{options[:prefix]}\n\n"
+      
+      snap_map.each do |key, value|
+        result = value ? "complete" : "unknown"
+        
+        puts "Time: #{key.iso8601}, Status: #{result}"
+      end
+      
+      puts "\n"
+      
     end
     
     desc "restore", "restore all files from a snapshot to a directory"

@@ -11,37 +11,28 @@ module S3snapshot
     ##
     #Get all prefixes in the bucket
     #
-    def print_prefixes
-      puts "Found the following prefixes\n\n"
-      
-      prefixes.each do |prefix|
-        puts prefix[0..-2]
-      end
-      
-      puts "\n"
+    def prefixes
+      bucket.files.all(:delimiter => "/").common_prefixes
     end
     
-    
     ##
-    #Get all prefixes in the bucket
-    #
-    def print_snapshots(prefix)
-      
-      prefix_padded = prefix_string(prefix)
-      
-      puts "Found the following timestamps from prefix #{prefix}\n\n"
+    #returns a map of snapshots.  The key is the time, the value is a boolean signaling if it's complete
+    ##
+    def snapshots(prefix)
+     
+      map = {}
       
       timestamps(prefix).each do |timestamp|
         
         time = Time.parse(timestamp)
         
-        result = complete?(prefix, time) ? "complete" : "unknown"
-        
-        puts "Time: #{timestamp[prefix_padded.length..-2]}, Status: #{result}"
+        map[time]  = complete?(prefix, time)
       end
       
-      puts "\n"
+      map
     end
+    
+    
     
     #Returns true if the backup is complete, false otherwise
     def complete?(prefix, time)            
@@ -60,13 +51,16 @@ module S3snapshot
       !backups.nil? && backups.length > 0
     end
     
+    ##
+    #Removes all incomplete backups.  Use wisely, will blitz a backup in progress
+    ##
+    def remove_incomplete(prefix, time)
+      
+    end
+    
+    
     private
     
-    
-    
-    def prefixes
-      bucket.files.all(:delimiter => "/").common_prefixes
-    end
     
     def timestamps(prefix)
       bucket.files.all(:prefix => prefix_string(prefix), :delimiter => "/").common_prefixes
