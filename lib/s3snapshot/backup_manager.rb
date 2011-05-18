@@ -33,7 +33,9 @@ module S3snapshot
       
       timestamps(prefix).each do |timestamp|
         
-        result = complete?(prefix, timestamp) ? "complete" : "unknown"
+        time = Time.parse(timestamp)
+        
+        result = complete?(prefix, time) ? "complete" : "unknown"
         
         puts "Time: #{timestamp[prefix_padded.length..-2]}, Status: #{result}"
       end
@@ -41,9 +43,22 @@ module S3snapshot
       puts "\n"
     end
     
+    #Returns true if the backup is complete, false otherwise
+    def complete?(prefix, time)            
+      complete_prefix = bucket.files.all(:prefix => complete_prefix(prefix, time))
+      
+      !complete_prefix.nil? && complete_prefix.length > 0
+    end
     
-    
-    
+    ##
+    # Returns true if the backup exists
+    #
+    def exists?(prefix, time)
+      
+      backups = bucket.files.all(:prefix => timepath(prefix, time))
+      
+      !backups.nil? && backups.length > 0
+    end
     
     private
     
@@ -61,14 +76,7 @@ module S3snapshot
       "#{prefix}/"
     end
     
-    #Construct the base path from the string prefix and iso timestamp,then check for completed file
-    def complete?(prefix, timestamp)
-      time = Time.parse(timestamp)
-            
-      complete_prefix = bucket.files.all(:prefix => complete_prefix(prefix, time))
-      
-      !complete_prefix.nil? && complete_prefix.length > 0
-    end
+    
     
   end
 end
