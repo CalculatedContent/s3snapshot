@@ -4,7 +4,9 @@ module S3snapshot
   class SyncOp
     
     #Constant for the file that will be present with the complete timestamp if a directory was successfully backed up
-    COMPLETE_MARKER = "s3snapshot_complete.txt"
+    COMPLETE_FILE = "s3snapshot_complete"
+    COMPLETE_EXTENSION = ".txt"
+    COMPLETE_MARKER = "#{COMPLETE_FILE}.#{COMPLETE_EXTENSION}"
     
     @bucket_name
     @aws_id
@@ -39,14 +41,22 @@ module S3snapshot
     #Generate the time path.  If a prefix is specified the format is <prefix>/<timestamp> otherwise it is timestamp.  All timestamps are in iso 8601 format and in 
     # the UTC time zone
     def timepath(prefix, time)
-      if prefix.nil?
-        return "#{time.utc.iso8601}"
-      end
-      
-      return "#{prefix}/#{time.utc.iso8601}"
-      
+     "#{prefix}/#{time.utc.iso8601}"
     end
     
+    
+    #
+    #The path to the complete file with the given prefix and time
+    #
+    def complete_path(prefix, time)
+      "#{complete_prefix(prefix, time)}#{COMPLETE_EXTENSION}"
+    end
+    
+    ##
+    #Constructs a prefix in the format of [prefix]/[iso time]/complete_file
+    def complete_prefix(prefix, time)
+      "#{timepath(prefix, time)}/#{COMPLETE_FILE}"
+    end
     
     
   end

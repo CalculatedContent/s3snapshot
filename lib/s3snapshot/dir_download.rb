@@ -4,32 +4,43 @@ require 'time'
 require 'fileutils'
 
 module S3snapshot
-  class DirUpload < SyncOp
+  class DirDownload < SyncOp
     
-    @tmpdir = nil
+    @timestap = nil
     @local_dir = nil
     @prefix = nil
     
-    def initialize(aws_id, aws_key, bucket_name, prefix, local_dir )
+    
+    def initialize(aws_id, aws_key, bucket_name, prefix, timestamp, local_dir )
       super(aws_id, aws_key, bucket_name)
-      @local_dir = local_dir
       @prefix = prefix
-
+      @timestamp = timestamp
+      @local_dir = local_dir
     end
     
-    def upload
+    def download
       
-      start_time = Time.now
+      
+      begin
+        start_time = Time.parse(@timestamp)
+      rescue Exception => e
+        puts "Could not parse timestamp #{@timestamp}"
+        raise e
+      end
       
       prefix_path = timepath(@prefix, start_time)
       
-      files = get_local_files
+      #Get all files from this backup
+      files = bucket.files.all(:prefix => prefix_path)
+      
+      #Make the local directory
+      FileUtils.mkdir(@local_dir)
       
       files.each do |file|
-        path = "#{prefix_path}/#{file[@local_dir.length..-1]}"
+        destination_path = "#{@local_dir}/#{file.name[prefix_path.length..-1]}"
         
-        puts "uploading '#{file}' to '#{@bucket_name}/#{path}''"
-        bucket.files.create(:key =>path, :body => File.read(file))
+        puts "downloading '#{file.name}' to '#{destination_path}'"
+        file.save(:key =>path, :body => File.read(file))
       end
       
       
@@ -64,22 +75,6 @@ module S3snapshot
       return files
     end
     
-    ###
-    #Creates a temp dir, writes a complete file and returns the path
-    def gen_complete_file
-      @tmpdir = Dir.mktmpdir
-      
-      file_path = "#{@tmpdir}/#{COMPLETE_MARKER}"
-      
-      File.open(file_path, 'w'){ |f| f.write("#{Time.now.utc.iso8601}")}
-      
-      return file_path
-      
-    end
     
-    
-    def remove_tmp_dir
-      FileUtils.remove_entry_secure(@tmpdir, true)
-    end
   end
 end
