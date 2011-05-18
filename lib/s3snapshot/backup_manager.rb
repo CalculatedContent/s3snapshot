@@ -19,7 +19,7 @@ module S3snapshot
     #returns a map of snapshots.  The key is the time, the value is a boolean signaling if it's complete
     ##
     def snapshots(prefix)
-     
+      
       map = {}
       
       timestamps(prefix).each do |timestamp|
@@ -54,12 +54,42 @@ module S3snapshot
     ##
     #Removes all incomplete backups.  Use wisely, will blitz a backup in progress
     ##
-    def remove_incomplete(prefix, time)
+    def clean(prefix)
+      snapshots(prefix).each do |time, complete|
+        unless complete
+          remove(prefix, time)
+        end
+      end
+    end
+    
+    #Delete all files from a snapshot.  Will remove the complete file first
+    def remove(prefix, timestamp)
+      complete_marker =  bucket.files.get(complete_path(prefix, timestamp))
       
+      #Destroy the complete marker.  This prevents other clients from thinking this backup is complete when the s3 bucket is read
+      unless complete_marker.nil?
+        complete_marker.destroy
+      end
+      
+      files = list_files(prefix, timestamp)
+      
+      files.each do |file|
+        file.destroy
+      end
+      
+      
+    end
+    
+    ##
+    # Return all files that exist in this backup bucket with the given time
+    ##
+    def list_files(prefix, time)
+      bucket.files.all(:prefix => timepath(prefix, time) )
     end
     
     
     private
+    
     
     
     def timestamps(prefix)

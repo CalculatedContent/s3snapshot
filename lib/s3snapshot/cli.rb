@@ -25,6 +25,22 @@ module S3snapshot
       s3upload.upload
     end
     
+    desc "restore", "restore all files from a snapshot to a directory"
+    
+    
+    method_option :awsid, :aliases => "-i", :desc => "The aws id", :type => :string, :required => true
+    method_option :awskey,:aliases => "-k", :desc => "The aws secret key", :type => :string, :required => true
+    method_option :bucket, :aliases => "-b", :desc => "The aws bucket to use", :type => :string, :required => true
+    method_option :prefix, :aliases => "-p", :desc => "The prefix to prepend to before searching for snapshots" , :type => :string,  :required => true
+    method_option :time, :aliases => "-t", :desc => "The timestamp to restore" , :type => :string,  :required => true
+    method_option :dest, :aliases => "-d", :desc => "The desitnation directory for downloaded files" , :type => :string,  :required => true
+    
+    
+    def restore
+      time = Time.parse(options[:time])
+      download = DirDownload.new(options[:awsid], options[:awskey], options[:bucket], options[:prefix], time, options[:dest])
+      download.download
+    end
     
     desc "prefixes", "list all prefixes in an s3 bucket"
     
@@ -72,21 +88,23 @@ module S3snapshot
       
     end
     
-    desc "restore", "restore all files from a snapshot to a directory"
+    
+    desc "clean", "Remove all snapshots in the prefix that do not have a complete status.  Use wisely, could remove backups in progress for a prefix causing corruption"
     
     
     method_option :awsid, :aliases => "-i", :desc => "The aws id", :type => :string, :required => true
     method_option :awskey,:aliases => "-k", :desc => "The aws secret key", :type => :string, :required => true
     method_option :bucket, :aliases => "-b", :desc => "The aws bucket to use", :type => :string, :required => true
     method_option :prefix, :aliases => "-p", :desc => "The prefix to prepend to before searching for snapshots" , :type => :string,  :required => true
-    method_option :time, :aliases => "-t", :desc => "The timestamp to restore" , :type => :string,  :required => true
-    method_option :dest, :aliases => "-d", :desc => "The desitnation directory for downloaded files" , :type => :string,  :required => true
     
     
-    def restore
-      time = Time.parse(options[:time])
-      download = DirDownload.new(options[:awsid], options[:awskey], options[:bucket], options[:prefix], time, options[:dest])
-      download.download
+    def clean
+      manager = BackupManager.new(options[:awsid], options[:awskey], options[:bucket])
+      
+      manager.clean(options[:prefix])
+      
     end
+    
+    
   end
 end

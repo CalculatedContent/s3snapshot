@@ -21,7 +21,6 @@ module S3snapshot
     
     def download
       
-      prefix_path = timepath(@prefix, @time)
       
       #Check if the backup is complete
       manager = BackupManager.new(@aws_id, @aws_key, @bucket_name)
@@ -36,13 +35,17 @@ module S3snapshot
         return
       end
       
+      
       #Get all files from this backup
-      files = bucket.files.all(:prefix => prefix_path)
+      files = manager.list_files(@prefix, @time)
       
       #Make the local directory
       unless File.directory?(@local_dir)
         FileUtils.mkdir(@local_dir)
       end
+      
+      prefix_path = timepath(@prefix, @time)
+      
       
       files.each do |file|
         destination_path = "#{@local_dir}/#{file.key[prefix_path.length+1..-1]}"
