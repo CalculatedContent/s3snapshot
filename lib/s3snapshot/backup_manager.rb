@@ -4,6 +4,11 @@ module S3snapshot
   #
   class BackupManager < SyncOp
     
+    #Number of seconds in a day
+    SECONDS_DAY = 60*60*24
+    SECONDS_WEEK = SECONDS_DAY * 7
+    
+    
     def initialize(aws_id, aws_key, bucket_name)
       super(aws_id, aws_key, bucket_name)
     end
@@ -16,7 +21,7 @@ module S3snapshot
     end
     
     ##
-    #returns a map of snapshots.  The key is the time, the value is a boolean signaling if it's complete
+    # returns a map of snapshots.  The key is the time, the value is a boolean signaling if it's complete
     ##
     def snapshots(prefix)
       
@@ -27,15 +32,19 @@ module S3snapshot
         time = Time.parse(timestamp)
         
         map[time]  = complete?(prefix, time)
+        
       end
       
       map
+      
     end
     
     
     
+    
+    
     #Returns true if the backup is complete, false otherwise
-    def complete?(prefix, time)            
+    def complete?(prefix, time)
       complete_prefix = bucket.files.all(:prefix => complete_prefix(prefix, time))
       
       !complete_prefix.nil? && complete_prefix.length > 0
@@ -51,6 +60,7 @@ module S3snapshot
       !backups.nil? && backups.length > 0
     end
     
+    
     ##
     #Removes all incomplete backups.  Use wisely, will blitz a backup in progress
     ##
@@ -62,7 +72,9 @@ module S3snapshot
       end
     end
     
-    #Delete all files from a snapshot.  Will remove the complete file first
+    #
+    #Delete all files from a snapshot.  Will remove the complete file first to avoid other clients using the backup
+    #
     def remove(prefix, timestamp)
       complete_marker =  bucket.files.get(complete_path(prefix, timestamp))
       
@@ -80,6 +92,7 @@ module S3snapshot
       
     end
     
+    
     ##
     # Return all files that exist in this backup bucket with the given time
     ##
@@ -88,9 +101,105 @@ module S3snapshot
     end
     
     
+    
+    ##
+    #Perform a rolling delete for the given prefix.  Keeps the "newest" daily backup for the given day, and keeps a backup for the day of the week specified
+    # by day of week.  day_of_week follows cron style syntax, 0 = sunday and 6 = saturday
+    def roll(prefix, num_days, num_weeks, day_of_week)
+      
+      start =  Time.now.utc
+      
+      #Truncate the oldest daily to 00 hours minutes and seconds
+      oldest_daily = start - SECONDS_DAY*num_days
+      
+      oldest_daily = Time.utc(oldest_daily.year, oldest_daily.month, oldest_daily.day)
+      
+      #Truncate the oldest weekly to 00 hours minutes and seconds
+      oldest_weekly = start - SECONDS_WEEK*num_weeks
+      
+      oldest_weekly = Time.utc(oldest_weekly.year, oldest_weekly.month, oldest_weekly.day)
+      
+      clean(prefix)
+      
+      merge_days(prefix, start)
+      
+      #Now iterate over every day and keep the number of days.  After that only keep the value that's on the number of weeks
+      snapshots(prefix).each do |time, complete|
+        if time < oldest_daily && !same_day(time, day_of_week)
+          remove(prefix, time)
+        end
+        
+        if time < oldest_weekly
+          remove(prefix, time)
+        end
+        
+      end
+    end
+    
+    
     private
     
     
+    ##
+    # Returnes true if the time occurs on the same day_of_week.  day_of_week follows cron style syntax, 0 = sunday and 6 = saturday
+    #
+    def same_day(time, day_of_week)
+      case day_of_week
+        when 0
+        return time.sunday?
+        when 1
+        return time.monday?
+        when 2
+        return time.tuesday?
+        when 3
+        return time.wednesday?
+        when 4
+        return time.thursday?
+        when 5
+        return time.friday?
+        when 6
+        return time.saturday?
+      else
+        raise "Invalid day of week. Expected 0-6 but received #{day_of_week}"
+      end
+      
+    end
+    
+    
+    ##
+    #Iterates over all snapshots and removes any duplicates for a day.  Only keep the latest for a day
+    ##
+    def merge_days(prefix, start)
+      #Use "yesterday" as a starting point
+      previous = nil
+      
+      snapshots(prefix).each do |time, complete|
+        #Skip anything that's before the "start" time above
+        if time > start || !complete
+          next  
+        end
+        
+        #2 backups on the same day, keep the oldest
+        if samedate?(previous, time)  
+          if(previous.to_i > time.to_i)
+            remove(prefix, time)
+          else
+            remove(prefix, previous)
+            previous = time
+          end
+          
+          next
+        end
+        
+        previous = time
+        
+      end
+    end
+    
+    #returns true if the first and second time occur in the same date (assumes utc time)
+    def samedate?(first, second)
+      !first.nil? && !second.nil? && first.yday == second.yday
+    end
     
     def timestamps(prefix)
       bucket.files.all(:prefix => prefix_string(prefix), :delimiter => "/").common_prefixes

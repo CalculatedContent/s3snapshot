@@ -33,7 +33,7 @@ module S3snapshot
     method_option :bucket, :aliases => "-b", :desc => "The aws bucket to use", :type => :string, :required => true
     method_option :prefix, :aliases => "-p", :desc => "The prefix to prepend to before searching for snapshots" , :type => :string,  :required => true
     method_option :time, :aliases => "-t", :desc => "The timestamp to restore" , :type => :string,  :required => true
-    method_option :dest, :aliases => "-d", :desc => "The desitnation directory for downloaded files" , :type => :string,  :required => true
+    method_option :dest, :aliases => "-d", :desc => "The destination directory for downloaded files" , :type => :string,  :required => true
     
     
     def restore
@@ -102,6 +102,26 @@ module S3snapshot
       manager = BackupManager.new(options[:awsid], options[:awskey], options[:bucket])
       
       manager.clean(options[:prefix])
+      
+    end
+    
+    desc "roll", "Analyze all snapshots and keep the latest daily for each day.  Then keep n days specified from the command line, and n weeks for the specified day of week"
+    
+    
+    method_option :awsid, :aliases => "-i", :desc => "The aws id", :type => :string, :required => true
+    method_option :awskey,:aliases => "-k", :desc => "The aws secret key", :type => :string, :required => true
+    method_option :bucket, :aliases => "-b", :desc => "The aws bucket to use", :type => :string, :required => true
+    method_option :prefix, :aliases => "-p", :desc => "The prefix to prepend to before searching for snapshots" , :type => :string,  :required => true
+    method_option :numdays, :aliases => "-n", :desc => "The number of days to keep" , :type => :numeric,  :required => true
+    method_option :numweeks, :aliases => "-w", :desc => "The number of weeks to keep" , :type => :numeric,  :required => true
+    method_option :dayofweek, :aliases => "-o", :desc => "The day of week to keep. 0 based like cron 0 = sunday 6 = saturday" , :type => :numeric,  :required => true
+    
+    
+    
+    def roll
+      manager = BackupManager.new(options[:awsid], options[:awskey], options[:bucket])
+      
+      manager.roll(options[:prefix], options[:numdays], options[:numweeks], options[:dayofweek])
       
     end
     
