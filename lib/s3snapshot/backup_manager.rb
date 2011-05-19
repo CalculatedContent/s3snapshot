@@ -1,3 +1,5 @@
+require 's3snapshot/time_factory'
+
 module S3snapshot
   #
   #handles retrieving all current backups and performing operations on them
@@ -7,6 +9,9 @@ module S3snapshot
     #Number of seconds in a day
     SECONDS_DAY = 60*60*24
     SECONDS_WEEK = SECONDS_DAY * 7
+    
+    #Instance variable of snapshot.  This is cached because loading this information is expensive and slow
+    @snapshots = nil
     
     
     def initialize(aws_id, aws_key, bucket_name)
@@ -25,17 +30,21 @@ module S3snapshot
     ##
     def snapshots(prefix)
       
-      map = {}
+      unless @snapshots.nil?
+        return @snapshots
+      end
+      
+      @snapshots = {}
       
       timestamps(prefix).each do |timestamp|
         
         time = Time.parse(timestamp)
         
-        map[time]  = complete?(prefix, time)
+        @snapshots[time]  = complete?(prefix, time)
         
       end
       
-      map
+      @snapshots
       
     end
     
@@ -107,21 +116,30 @@ module S3snapshot
     # by day of week.  day_of_week follows cron style syntax, 0 = sunday and 6 = saturday
     def roll(prefix, num_days, num_weeks, day_of_week)
       
-      start =  Time.now.utc
+      start =  TimeFactory.utc_time
+     
+      clean(prefix)
       
-      #Truncate the oldest daily to 00 hours minutes and seconds
-      oldest_daily = start - SECONDS_DAY*num_days
+      merge_days(prefix, start)
+      
+      
+      snap_list = snapshots(prefix)
+      
+      #Nothing to do
+      if snap_list.nil? || snap_list.empty?
+        return
+      end
+      
+      #Truncate the oldest daily to 00 hours minutes and seconds based on the "newest" completed backup after the merge
+      oldest_daily = snap_list.first.key - SECONDS_DAY*num_days
       
       oldest_daily = Time.utc(oldest_daily.year, oldest_daily.month, oldest_daily.day)
       
       #Truncate the oldest weekly to 00 hours minutes and seconds
-      oldest_weekly = start - SECONDS_WEEK*num_weeks
+      oldest_weekly = snap_list.first.key - SECONDS_WEEK*num_weeks
       
       oldest_weekly = Time.utc(oldest_weekly.year, oldest_weekly.month, oldest_weekly.day)
       
-      clean(prefix)
-      
-      merge_days(prefix, start)
       
       #Now iterate over every day and keep the number of days.  After that only keep the value that's on the number of weeks
       snapshots(prefix).each do |time, complete|

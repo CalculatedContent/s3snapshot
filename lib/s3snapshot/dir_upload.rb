@@ -1,7 +1,9 @@
 require 'fog'
 require 's3snapshot/sync_op'
+require 's3snapshot/time_factory'
 require 'time'
 require 'fileutils'
+
 
 module S3snapshot
   class DirUpload < SyncOp
@@ -19,30 +21,24 @@ module S3snapshot
     
     def upload
       
-      start_time = Time.now
+      start_time = TimeFactory.utc_time
       
       prefix_path = timepath(@prefix, start_time)
       
       files = get_local_files
       
       files.each do |file|
-        path = "#{prefix_path}/#{file[@local_dir.length..-1]}"
+        path = "#{prefix_path}/#{file[@local_dir.length+1..-1]}"
         
-        puts "uploading '#{file}' to '#{@bucket_name}/#{path}''"
+        puts "uploading '#{file}' to '#{@bucket_name}/#{path}'"
         bucket.files.create(:key =>path, :body => File.read(file))
       end
       
       
       puts "Writing complete marker"
       
-      #Gen the "complete" marker file with the complete epoch time
-      complete_file = gen_complete_file
-      
-      #Upload the complete marker
-      bucket.files.create(:key => complete_path(@prefix, start_time), :body => File.read(complete_file))
-      
-      #remove the temp dir
-      remove_tmp_dir
+       #Upload the complete marker
+      bucket.files.create(:key => complete_path(@prefix, start_time), :body => TimeFactory.utc_time.iso8601)
       
       puts "backup complete!"
     end
@@ -64,22 +60,6 @@ module S3snapshot
       return files
     end
     
-    ###
-    #Creates a temp dir, writes a complete file and returns the path
-    def gen_complete_file
-      @tmpdir = Dir.mktmpdir
-      
-      file_path = "#{@tmpdir}/#{COMPLETE_MARKER}"
-      
-      File.open(file_path, 'w'){ |f| f.write("#{Time.now.utc.iso8601}")}
-      
-      return file_path
-      
-    end
-    
-    
-    def remove_tmp_dir
-      FileUtils.remove_entry_secure(@tmpdir, true)
-    end
+  
   end
 end
