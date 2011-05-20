@@ -4,8 +4,8 @@ module S3snapshot
   class SyncOp
     
     #Constant for the file that will be present with the complete timestamp if a directory was successfully backed up
-    COMPLETE_FILE = "s3snapshot_complete"
-    COMPLETE_EXTENSION = ".txt"
+    COMPLETE_FILE = "s3snapshot"
+    COMPLETE_EXTENSION = "complete_marker"
     COMPLETE_MARKER = "#{COMPLETE_FILE}.#{COMPLETE_EXTENSION}"
     
     @bucket_name
@@ -50,7 +50,7 @@ module S3snapshot
     #The path to the complete file with the given prefix and time
     #
     def complete_path(prefix, time)
-      "#{complete_prefix(prefix, time)}#{COMPLETE_EXTENSION}"
+      "#{complete_prefix(prefix, time)}#{COMPLETE_MARKER}"
     end
     
     ##

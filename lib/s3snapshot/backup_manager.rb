@@ -2,7 +2,8 @@ require 's3snapshot/time_factory'
 
 module S3snapshot
   #
-  #handles retrieving all current backups and performing operations on them
+  #Handles retrieving all current backups and performing operations on them.  This object is stateful, once snapshots are loaded it is cached.
+  #Create a new instance or call clear_snapshots to force a reload from aws
   #
   class BackupManager < SyncOp
     
@@ -10,7 +11,7 @@ module S3snapshot
     SECONDS_DAY = 60*60*24
     SECONDS_WEEK = SECONDS_DAY * 7
     
-    #Instance variable of snapshot.  This is cached because loading this information is expensive and slow
+    #Instance variable of snapshots by prefix.  This is cached because loading this information is expensive and slow
     @snapshots = nil
     
     
@@ -30,43 +31,51 @@ module S3snapshot
     ##
     def snapshots(prefix)
       
-      unless @snapshots.nil?
-        return @snapshots
+      prefix_snap = get_snapshot(prefix)
+      
+      unless prefix_snap.nil?
+        return prefix_snap
       end
       
-      @snapshots = {}
+      prefix_snap = {}
       
       timestamps(prefix).each do |timestamp|
         
         time = Time.parse(timestamp)
         
-        @snapshots[time]  = complete?(prefix, time)
+        prefix_snap[time]  = read_complete?(prefix, time)
         
       end
       
-      @snapshots
+      set_snapshot(prefix, prefix_snap)
+      
+      prefix_snap
       
     end
     
-    
+    ##
+    #clear the local cached copy of the snapshot
+    #
+    def clear_snapshots(prefix)
+      @snapshots[prefix] = nil
+    end
     
     
     
     #Returns true if the backup is complete, false otherwise
     def complete?(prefix, time)
-      complete_prefix = bucket.files.all(:prefix => complete_prefix(prefix, time))
-      
-      !complete_prefix.nil? && complete_prefix.length > 0
+      value = snapshots(prefix)[time]
+      value.nil? ? false : value
     end
     
     ##
     # Returns true if the backup exists
     #
     def exists?(prefix, time)
-      
-      backups = bucket.files.all(:prefix => timepath(prefix, time))
-      
-      !backups.nil? && backups.length > 0
+      !snapshots(prefix)[time].nil?
+      #      backups = bucket.files.all(:prefix => timepath(prefix, time))
+      #      
+      #      !backups.nil? && backups.length > 0
     end
     
     
@@ -98,6 +107,7 @@ module S3snapshot
         file.destroy
       end
       
+      get_snapshot(prefix).delete(timestamp)
       
     end
     
@@ -117,7 +127,7 @@ module S3snapshot
     def roll(prefix, num_days, num_weeks, day_of_week)
       
       start =  TimeFactory.utc_time
-     
+      
       clean(prefix)
       
       merge_days(prefix, start)
@@ -130,13 +140,20 @@ module S3snapshot
         return
       end
       
+      first_time = nil
+      
+      snap_list.each_key do |key| 
+        first_time = key
+        break
+      end
+      
       #Truncate the oldest daily to 00 hours minutes and seconds based on the "newest" completed backup after the merge
-      oldest_daily = snap_list.first.key - SECONDS_DAY*num_days
+      oldest_daily = first_time - SECONDS_DAY*num_days
       
       oldest_daily = Time.utc(oldest_daily.year, oldest_daily.month, oldest_daily.day)
       
       #Truncate the oldest weekly to 00 hours minutes and seconds
-      oldest_weekly = snap_list.first.key - SECONDS_WEEK*num_weeks
+      oldest_weekly = first_time - SECONDS_WEEK*num_weeks
       
       oldest_weekly = Time.utc(oldest_weekly.year, oldest_weekly.month, oldest_weekly.day)
       
@@ -157,6 +174,15 @@ module S3snapshot
     
     private
     
+    
+    #Returns true if the backup is complete, false otherwise. Downloads the file so can be slow
+    def read_complete?(prefix, time)
+      
+      found_prefixes = bucket.files.all(:prefix => timepath(prefix, time), :delimiter => COMPLETE_EXTENSION).common_prefixes
+      
+      
+      !found_prefixes.nil? && found_prefixes.length > 0
+    end
     
     ##
     # Returnes true if the time occurs on the same day_of_week.  day_of_week follows cron style syntax, 0 = sunday and 6 = saturday
@@ -227,6 +253,24 @@ module S3snapshot
       "#{prefix}/"
     end
     
+    
+    ##
+    # Get a snapshot by prefix
+    ##
+    def get_snapshot(prefix)
+      @snapshots.nil? ? nil : @snapshots[prefix]
+    end
+    
+    ##
+    #Set the snapshot into the context
+    ##
+    def set_snapshot(prefix, snaphash)
+      if @snapshots.nil?
+        @snapshots = {}
+      end
+      
+      @snapshots[prefix] = snaphash
+    end
     
     
   end
