@@ -38,3 +38,7 @@ For all backups, if older than the max weekly, remove it , of between oldest wee
 # Notes
 
 Occasionally a cleanup operation will miss a time stamp.  From my testing this appears to be due to the amazon eventual consistency, and the timestamp not being returned on a delim search.  On the next run it is usually deleted
+
+#Future features
+
+* Use native s3 copying for unmodified files (similar to s3sync).  If a file exists in the previous completed backup and has not changed, copy it on the new path in s3, this will avoid the need to upload unmodified files.
