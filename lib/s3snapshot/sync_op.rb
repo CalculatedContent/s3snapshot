@@ -50,7 +50,7 @@ module S3snapshot
     #The path to the complete file with the given prefix and time
     #
     def complete_path(prefix, time)
-      "#{complete_prefix(prefix, time)}#{COMPLETE_MARKER}"
+      "#{timepath(prefix, time)}/#{COMPLETE_MARKER}"
     end
     
     ##

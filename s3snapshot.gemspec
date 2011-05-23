@@ -20,4 +20,5 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.add_dependency "fog", "~>0.8.1"  
   s.add_dependency "thor", "~>0.14.6"
+  s.add_dependency "dictionary", "~>1.0.0"
 end

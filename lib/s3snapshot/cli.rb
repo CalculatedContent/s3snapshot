@@ -42,6 +42,31 @@ module S3snapshot
       download.download
     end
     
+    
+    desc "restorelatest", "restore the latest snapshot to a directory"
+    
+    
+    method_option :awsid, :aliases => "-i", :desc => "The aws id", :type => :string, :required => true
+    method_option :awskey,:aliases => "-k", :desc => "The aws secret key", :type => :string, :required => true
+    method_option :bucket, :aliases => "-b", :desc => "The aws bucket to use", :type => :string, :required => true
+    method_option :prefix, :aliases => "-p", :desc => "The prefix to prepend to before searching for snapshots" , :type => :string,  :required => true
+    method_option :dest, :aliases => "-d", :desc => "The destination directory for downloaded files" , :type => :string,  :required => true
+    
+    
+    def restorelatest
+      
+      manager = BackupManager.new(options[:awsid], options[:awskey], options[:bucket])
+      latest_complete = manager.latest(options[:prefix])
+      
+      if latest_complete.nil?
+        puts "Cannot find a complete snapshot with prefix #{options[:prefix]}"
+        exit 1
+      end
+            
+      download = DirDownload.new(options[:awsid], options[:awskey], options[:bucket], options[:prefix], latest_complete, options[:dest])
+      download.download
+    end
+    
     desc "prefixes", "list all prefixes in an s3 bucket"
     
     

@@ -1,4 +1,5 @@
 require 's3snapshot/time_factory'
+require 'dictionary'
 
 module S3snapshot
   #
@@ -37,7 +38,7 @@ module S3snapshot
         return prefix_snap
       end
       
-      prefix_snap = {}
+      prefix_snap = Dictionary.new
       
       timestamps(prefix).each do |timestamp|
         
@@ -51,6 +52,19 @@ module S3snapshot
       
       prefix_snap
       
+    end
+    
+    ##
+    #Get the latest completed backup for the given prefix.
+    ## Will return nil if one isn't available  
+    def latest(prefix)
+      snapshots(prefix).each do  |time, complete|
+        if complete
+          return time
+        end
+      end
+      
+      nil
     end
     
     ##
@@ -128,43 +142,43 @@ module S3snapshot
       
       start =  TimeFactory.utc_time
       
+      start = Time.utc(start.year, start.month, start.day)
+      
       clean(prefix)
       
       merge_days(prefix, start)
       
       
-      snap_list = snapshots(prefix)
+      snaps = snapshots(prefix)
       
       #Nothing to do
-      if snap_list.nil? || snap_list.empty?
+      if snaps.nil? ||snaps.empty?
         return
       end
       
-      first_time = nil
-      
-      snap_list.each_key do |key| 
-        first_time = key
-        break
-      end
+      newest_time =snaps.keys.last
       
       #Truncate the oldest daily to 00 hours minutes and seconds based on the "newest" completed backup after the merge
-      oldest_daily = first_time - SECONDS_DAY*num_days
+      oldest_daily = newest_time - SECONDS_DAY*num_days
       
       oldest_daily = Time.utc(oldest_daily.year, oldest_daily.month, oldest_daily.day)
       
       #Truncate the oldest weekly to 00 hours minutes and seconds
-      oldest_weekly = first_time - SECONDS_WEEK*num_weeks
+      oldest_weekly = newest_time - SECONDS_WEEK*num_weeks
       
       oldest_weekly = Time.utc(oldest_weekly.year, oldest_weekly.month, oldest_weekly.day)
       
       
       #Now iterate over every day and keep the number of days.  After that only keep the value that's on the number of weeks
-      snapshots(prefix).each do |time, complete|
-        if time < oldest_daily && !same_day(time, day_of_week)
-          remove(prefix, time)
+      snaps.each do |time, complete|
+        
+        #We're done, we've fallen into the day range
+        if time >= oldest_daily
+          break
         end
         
-        if time < oldest_weekly
+        #Is older than the oldest daily,or not the right day of the week so should be deleted
+        if time < oldest_weekly || !same_day(time, day_of_week)
           remove(prefix, time)
         end
         
@@ -188,24 +202,12 @@ module S3snapshot
     # Returnes true if the time occurs on the same day_of_week.  day_of_week follows cron style syntax, 0 = sunday and 6 = saturday
     #
     def same_day(time, day_of_week)
-      case day_of_week
-        when 0
-        return time.sunday?
-        when 1
-        return time.monday?
-        when 2
-        return time.tuesday?
-        when 3
-        return time.wednesday?
-        when 4
-        return time.thursday?
-        when 5
-        return time.friday?
-        when 6
-        return time.saturday?
-      else
+      
+      unless day_of_week > -1 && day_of_week < 7
         raise "Invalid day of week. Expected 0-6 but received #{day_of_week}"
       end
+      
+      time.wday == day_of_week
       
     end
     
@@ -242,6 +244,7 @@ module S3snapshot
     
     #returns true if the first and second time occur in the same date (assumes utc time)
     def samedate?(first, second)
+      puts "first: #{first};#{first.nil? ? "nil": first.yday}, second #{second};#{second.nil? ? "nil": second.yday}"
       !first.nil? && !second.nil? && first.yday == second.yday
     end
     
@@ -266,7 +269,7 @@ module S3snapshot
     ##
     def set_snapshot(prefix, snaphash)
       if @snapshots.nil?
-        @snapshots = {}
+        @snapshots = Hash.new
       end
       
       @snapshots[prefix] = snaphash
