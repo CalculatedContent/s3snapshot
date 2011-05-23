@@ -1,6 +1,6 @@
 # Overview
 
-This gem is designed to sync an immutable directory to a specific directory on Amazon S3.  In principal it is similar to time machine for Mac.  We use this utility to create snapshots of our cassandra data.
+This gem is designed to sync an immutable directory to a timestamped prefix on Amazon S3.  In principal it is similar to time machine for Mac.  We use this utility to create snapshots of our Cassandra data.
 
 # Installing
 
