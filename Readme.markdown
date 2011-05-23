@@ -22,7 +22,7 @@ Below is a general outline on how the plugin was designed to work
 
 ## Snapshot path
 
-All snapshot paths are of the format [prefix]/[snapshot utc time].  In our usage, we typically use the prefix of node+function, such as test-cass-west-1_cassandra
+All snapshot paths are of the format [prefix]/[snapshot utc time].  In our usage, we typically use the prefix of node+directory, such as test-cass-west-1_snapshot
 
 ## Rolling cleanup
 
