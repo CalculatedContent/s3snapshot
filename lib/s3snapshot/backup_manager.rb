@@ -244,7 +244,7 @@ module S3snapshot
     
     #returns true if the first and second time occur in the same date (assumes utc time)
     def samedate?(first, second)
-      puts "first: #{first};#{first.nil? ? "nil": first.yday}, second #{second};#{second.nil? ? "nil": second.yday}"
+   #   puts "first: #{first};#{first.nil? ? "nil": first.yday}, second #{second};#{second.nil? ? "nil": second.yday}"
       !first.nil? && !second.nil? && first.yday == second.yday
     end
     
