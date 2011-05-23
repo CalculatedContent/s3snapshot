@@ -27,8 +27,11 @@ All snapshot paths are of the format [prefix]/[snapshot utc time].  In our usage
 ## Rolling cleanup
 
 Capture the current time UTC, and truncate to 00:00 hours
+
 Remove all incomplete backups before start time
+
 Analyze all time stamps, if more than one backup is present per day, only keep the latest complete backup for that day
+
 For all backups, if older than the max weekly, remove it , of between oldest weekly and oldest daily, only keep it if it falls on the day specified
 
 
