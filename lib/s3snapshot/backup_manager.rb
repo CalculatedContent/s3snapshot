@@ -55,8 +55,8 @@ module S3snapshot
     end
     
     ##
-    #Get the latest completed backup for the given prefix.
-    ## Will return nil if one isn't available  
+    #Get the latest completed backup for the given prefix. Will return nil if one isn't available  
+    ## 
     def latest(prefix)
       snapshots(prefix).each do  |time, complete|
         if complete
@@ -136,8 +136,8 @@ module S3snapshot
     
     
     ##
-    #Perform a rolling delete for the given prefix.  Keeps the "newest" daily backup for the given day, and keeps a backup for the day of the week specified
-    # by day of week.  day_of_week follows cron style syntax, 0 = sunday and 6 = saturday
+    #Perform a rolling delete for the given prefix.  Keeps the "newest" daily backup for the given day, and keeps a backup for the day of the week specified by day of week.  day_of_week follows cron style syntax, 0 = sunday and 6 = saturday
+    # 
     def roll(prefix, num_days, num_weeks, day_of_week)
       
       start =  TimeFactory.utc_time

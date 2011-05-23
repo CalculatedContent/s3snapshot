@@ -39,8 +39,7 @@ module S3snapshot
       aws.directories.get(@bucket_name)
     end
     
-    #Generate the time path.  If a prefix is specified the format is <prefix>/<timestamp> otherwise it is timestamp.  All timestamps are in iso 8601 format and in 
-    # the UTC time zone
+    #Generate the time path.  If a prefix is specified the format is <prefix>/<timestamp> otherwise it is timestamp.  All timestamps are in iso 8601 format and in  the UTC time zone
     def timepath(prefix, time)
      "#{prefix}/#{time.utc.iso8601}"
     end
