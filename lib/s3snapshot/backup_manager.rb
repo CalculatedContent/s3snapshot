@@ -58,7 +58,7 @@ module S3snapshot
     #Get the latest completed backup for the given prefix. Will return nil if one isn't available  
     ## 
     def latest(prefix)
-      snapshots(prefix).each do  |time, complete|
+      snapshots(prefix).reverse.each do  |time, complete|
         if complete
           return time
         end
