@@ -14,11 +14,11 @@ This gem is designed to sync an immutable directory to a timestamped prefix on A
 * List all prefixes
 * List all times for prefixes
 * Clean incomplete uploads (Use wisely, can delete a backup in progress)
-* Perform rolling cleanup.  Can keep a user defined number of daily and weekly backups with user specified day.
+* Perform rolling cleanup.  Can keep a user defined number of daily and weekly backups with user specified day.  Ally days and weeks are deltas calculated from the timestamp of the last successful backup to s3.
 
 # Algorithm
 
-Below is a general outline on how the plugin was designed to work
+Below is a general outline on how the plugin was designed to work.  No meta data is stored on S3.  Every time this plugin is launched it performs an analysis of S3 to ensure it is always using a correct state of backups.  2 instances should never access the same prefix concurrently, this could cause issues with data consistency.
 
 ## Snapshot path
 
