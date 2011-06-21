@@ -28,7 +28,7 @@ module S3snapshot
     # Return the cached aws connection or create a new one
     ##
     def aws
-      @aws ||= Fog::Storage.new(:provider => 'AWS', :aws_access_key_id => @aws_id, :aws_secret_access_key => @aws_key)
+      @aws ||= Fog::Storage.new(:provider => 'AWS', :persistent => false, :aws_access_key_id => @aws_id, :aws_secret_access_key => @aws_key)
     end
     
     ##
