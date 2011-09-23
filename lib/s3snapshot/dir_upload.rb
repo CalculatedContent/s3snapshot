@@ -31,7 +31,7 @@ module S3snapshot
         path = "#{prefix_path}/#{file[@local_dir.length+1..-1]}"
         
         puts "uploading '#{file}' to '#{@bucket_name}/#{path}'"
-        bucket.files.create(:key =>path, :body => File.read(file))
+        bucket.files.create(:key =>path, :body => File.open(file))
       end
       
       
