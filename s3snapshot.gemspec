@@ -7,8 +7,8 @@ Gem::Specification.new do |s|
   s.version     = S3snapshot::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Todd"]
-  s.email       = ["foo@bar.com"]
-  s.homepage    = ""
+  s.email       = ["todd@spidertracks.co.nz"]
+  s.homepage    = "https://github.com/spidertracks/s3snapshot"
   s.summary     = %q{Uploads to s3}
   s.description = %q{see summary}
 
