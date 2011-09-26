@@ -1,0 +1,4 @@
+A simple backup utility to create time based snapshots similar to time machine on s3.  
+All options are command line based so they can easily be scripted with cron.
+Supports multiple daily backups, as well as rolling daily and weekly.  
+For daily, it keeps the newest complete backup for the day, for weekly it keeps the last day in the week. 
