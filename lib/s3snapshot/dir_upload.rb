@@ -16,7 +16,7 @@ module S3snapshot
       super(aws_id, aws_key, bucket_name)
       @local_dir = local_dir
       @prefix = prefix
-
+      
     end
     
     def upload
@@ -28,16 +28,20 @@ module S3snapshot
       files = get_local_files
       
       files.each do |file|
-        path = "#{prefix_path}/#{file[@local_dir.length+1..-1]}"
+        path = "#{prefix_path}/#{file[@local_dir.length..-1]}"
         
         puts "uploading '#{file}' to '#{@bucket_name}/#{path}'"
-        bucket.files.create(:key =>path, :body => File.open(file))
+        
+        File.open(file) do |file|
+          bucket.files.create(:key =>path, :body => file)
+        end
+        
       end
       
       
       puts "Writing complete marker"
       
-       #Upload the complete marker
+      #Upload the complete marker
       bucket.files.create(:key => complete_path(@prefix, start_time), :body => TimeFactory.utc_time.iso8601)
       
       puts "backup complete!"
@@ -60,6 +64,6 @@ module S3snapshot
       return files
     end
     
-  
+    
   end
 end
