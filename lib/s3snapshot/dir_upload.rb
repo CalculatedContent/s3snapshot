@@ -28,7 +28,14 @@ module S3snapshot
       files = get_local_files
       
       files.each do |file|
-        path = "#{prefix_path}/#{file[@local_dir.length..-1]}"
+        file_name = file[@local_dir.length..-1];
+        
+        #Strip the leading "/" from file paths
+        if file_name.length > 0 && file_name[0] == '/'
+          file_name = file[1..-1]
+        end
+        
+        path = "#{prefix_path}/#{file_name}"
         
         puts "uploading '#{file}' to '#{@bucket_name}/#{path}'"
         
