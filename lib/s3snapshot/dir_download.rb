@@ -48,6 +48,9 @@ module S3snapshot
       
       
       files.each do |file|
+        #We have to reload state from s3.  Otherwise we can't download when the restore process takes a while
+        file.reload()
+        
         destination_path = "#{@local_dir}/#{file.key[prefix_path.length+1..-1]}"
         
         directory = destination_path[0..-File.basename(destination_path).length-1]
