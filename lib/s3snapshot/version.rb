@@ -1,3 +1,3 @@
 module S3snapshot
-  VERSION = "0.0.10b"
+  VERSION = "0.0.10"
 end

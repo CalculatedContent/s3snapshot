@@ -6,7 +6,7 @@ require 'fileutils'
 
 module S3snapshot
   class DirDownload < SyncOp
-    
+        
     @time = nil
     @local_dir = nil
     @prefix = nil
@@ -63,8 +63,7 @@ module S3snapshot
         File.open(destination_path, File::RDWR|File::CREAT) do |file|
           bucket.files.get(remotefile.key) do |chunk, remaining_bytes, total_bytes|
             file.write(chunk)
-            percent = ((1-remaining_bytes.to_f/total_bytes.to_f)*100).round
-            puts "#{percent}% complete"
+            puts "#{remaining_bytes}b of #{total_bytes}b remaining"
           end
         end
         
