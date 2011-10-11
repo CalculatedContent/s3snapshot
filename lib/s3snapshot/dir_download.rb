@@ -47,11 +47,9 @@ module S3snapshot
       prefix_path = timepath(@prefix, @time)
       
       
-      files.each do |file|
+      files.each do |remotefile|
         #We have to reload state from s3.  Otherwise we can't download when the restore process takes a while
-        file.reload()
-        
-        destination_path = "#{@local_dir}/#{file.key[prefix_path.length+1..-1]}"
+        destination_path = "#{@local_dir}/#{remotefile.key[prefix_path.length+1..-1]}"
         
         directory = destination_path[0..-File.basename(destination_path).length-1]
         
@@ -60,12 +58,18 @@ module S3snapshot
           FileUtils.mkdir(directory)
         end
         
-        puts "downloading '#{file.key}' to '#{destination_path}'"
+        puts "downloading '#{remotefile.key}' to '#{destination_path}'"
         
-        #Open the file in read/write and create it if it doesn't exist, then write the content from s3 into it
-        File.open(destination_path, File::RDWR|File::CREAT){ |local| local.write(file.body)}
+        File.open(destination_path, File::RDWR|File::CREAT) do |file|
+          bucket.files.get(remotefile.key) do |chunk, remaining_bytes, total_bytes|
+            file.write(chunk)
+            percent = ((1-remaining_bytes.to_f/total_bytes.to_f)*100).round
+            puts "#{percent}% complete"
+          end
+        end
         
       end
+      
       
       
       puts "Writing complete marker"
