@@ -43,7 +43,7 @@ module S3snapshot
         two_g_bytes = 1024*1024*1024*1
         fsize = File.size file
         puts "uploading '#{file}' [#{fsize} bytes] to '#{@bucket_name}/#{path}'"
-        if fsize > two_gb_bytes
+        if fsize > two_g_bytes
           upload_file_as_multipart(file, path)
         else
           # normal upload
