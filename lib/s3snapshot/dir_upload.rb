@@ -41,7 +41,7 @@ module S3snapshot
         # check if file is greater than 5GB 
 
         two_g_bytes = 1024*1024*1024*1
-        fsize = File.new(path).size
+        fsize = File.new(file).size
         puts "uploading '#{file}' [#{fsize} bytes] to '#{@bucket_name}/#{path}'"
         if fsize > two_gb_bytes
           upload_file_as_multipart(file, path)
