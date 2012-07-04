@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.name        = "s3snapshot"
   s.version     = S3snapshot::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Todd"]
+  s.authors     = ["Todd Nine", "Andrew Esler"]
   s.email       = ["todd@spidertracks.co.nz"]
   s.homepage    = "https://github.com/spidertracks/s3snapshot"
   s.summary     = %q{Uploads to s3}
@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
-  s.add_dependency "fog", "~>1.0.0"  
+  s.add_dependency "fog", "~>1.3.1"  
   s.add_dependency "thor", "~>0.14.6"
   s.add_dependency "dictionary", "~>1.0.0"
 end
