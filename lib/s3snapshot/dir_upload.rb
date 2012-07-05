@@ -6,7 +6,7 @@ require 'fileutils'
 require 'digest/md5'
 require 'base64'
 require 'date'
-require 'fileutils'
+require 'tmpdir'
 
 module S3snapshot
   class DirUpload < SyncOp
@@ -17,10 +17,24 @@ module S3snapshot
 
     MAX_RETRY_COUNT = 5;
     
-    def initialize(aws_id, aws_key, bucket_name, prefix, local_dir )
+    def initialize(aws_id, aws_key, bucket_name, prefix, local_dir, tmp_dir = nil )
       super(aws_id, aws_key, bucket_name)
       @local_dir = local_dir
       @prefix = prefix
+
+      @tmpdir = tmp_dir ? tmp_dir : Dir.tmp
+      if File.exists? @tmpdir
+        puts "Temp directory #{@tmpdir} exists."
+      else
+        begin
+          FileUtils.mkdir_p @tmpdir
+          FileUtils.chmod 0777, @tmpdir
+        rescue Exception => e
+          puts "Unable to create directory #{@tmpdir} due to #{e.message}"
+          puts e.backtrace.join("\n")
+          exit 5  
+        end
+      end
     end
     
     def upload
@@ -157,7 +171,7 @@ module S3snapshot
 
       # tmp dir to place the split file into
       cur_date = DateTime.now.strftime('%F-%T')
-      workdir = "/tmp/work/#{cur_date}/#{File.basename(object_to_upload)}/"
+      workdir = "#{@tmpdir}/s3snapshot-splits/#{cur_date}/#{File.basename(object_to_upload)}/"
       FileUtils.mkdir_p(workdir)
 
       # Assumes we are running on unix with the split command available.

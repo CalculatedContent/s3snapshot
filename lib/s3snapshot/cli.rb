@@ -14,14 +14,15 @@ module S3snapshot
     method_option :bucket, :aliases => "-b", :desc => "The aws bucket to use", :type => :string, :required => true
     method_option :directory, :aliases => "-d", :desc => "The directory to upload", :type => :string, :required => true
     method_option :prefix, :aliases => "-p", :desc => "A prefix to prepend to the path before the timestamp.  Useful in cluster to specifiy a node name, or a node+directory scheme.  Prefix strategies can be mixed in a bucket, they must just be unique." , :type => :string,  :required => true
-    
+    method_option :tmpdir, :aliases => "-t", :desc => "The tmp directory to use when creating file splits. Should not have a trailing /", :type => :string, :required => false
+
     ##
     #Uploads the directory to the s3 bucket with a prefix
     def backup
       directory = options[:directory]
       puts "You are uploading directory #{directory}"
       
-      s3upload = DirUpload.new(options[:awsid], options[:awskey],  options[:bucket],   options[:prefix], directory )
+      s3upload = DirUpload.new(options[:awsid], options[:awskey],  options[:bucket],   options[:prefix], directory, options[:tmpdir] )
       s3upload.upload
     end
     
