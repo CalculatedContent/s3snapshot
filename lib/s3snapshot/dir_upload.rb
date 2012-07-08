@@ -55,11 +55,11 @@ module S3snapshot
         
         path = "#{prefix_path}/#{file_name}"
 
-        two_g_bytes = 1024*1024*1024*2
+        split_threshhold = 1024*1024*1024*4
         fsize = File.size file
         puts "uploading '#{file}' [#{fsize} bytes] to '#{@bucket_name}/#{path}'"
-        # check if file is greater than 2G 
-        if fsize > two_g_bytes
+        # check if file is greater than 5G 
+        if fsize > split_threshhold
           upload_file_as_multipart(file, path)
         else
           # normal upload
@@ -176,6 +176,7 @@ module S3snapshot
 
       # Assumes we are running on unix with the split command available.
       # Split the file into chunks, max size of 1G, the chunks are 000, 001, etc
+      # Smaller chunks increase the likelyhood of upload success.
       split_cmd = "split -b 1G -a 3 --verbose -d #{object_to_upload} #{workdir}"
       puts "split command: #{split_cmd}"
       split_result = system split_cmd

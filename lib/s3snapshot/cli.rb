@@ -22,7 +22,7 @@ module S3snapshot
       directory = options[:directory]
       puts "You are uploading directory #{directory}"
       
-      s3upload = DirUpload.new(options[:awsid], options[:awskey],  options[:bucket],   options[:prefix], directory, options[:tmpdir] )
+      s3upload = DirUpload.new(options[:awsid], options[:awskey], options[:bucket], options[:prefix], directory, options[:tmpdir] )
       s3upload.upload
     end
     

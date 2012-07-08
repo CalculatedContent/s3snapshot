@@ -2,3 +2,6 @@ A simple backup utility to create time based snapshots similar to time machine o
 All options are command line based so they can easily be scripted with cron.
 Supports multiple daily backups, as well as rolling daily and weekly.  
 For daily, it keeps the newest complete backup for the day, for weekly it keeps the last day in the week. 
+
+Note that this should only be run on machines with the *nix split command available. May work on windows with cygwin, but is untested. 
+If a file is over 5GB, the only way to upload it to S3 is to use multipart uploads. To split the file into parts, s3snapshot relies on the split command. The file parts are uploaded sequentially, so there is no speed boost in using multipart upload. s3snapshot is developed on MRI 1.8.7 so multi thread upload does not work. 
